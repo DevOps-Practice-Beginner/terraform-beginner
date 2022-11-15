@@ -1,0 +1,222 @@
+Hello, Cloud Gurus,
+and welcome to this lesson on Terraform Provisioners,
+when to use them.
+Provisioners in essence give users a way
+to execute custom scripts or commands
+through Terraform resources.
+We can choose to run such scripts either locally,
+that is on the same system
+where the Terraform commands are running,
+or remotely on a newly spun up VM through Terraform.
+A provisioner is attached to our Terraform resource
+and allows custom connection parameters
+that can be passed to connect to the remote resources
+via SSH or WinRM for carrying out commands
+against that resource.
+There's two types of provisioners,
+which cover 2 events
+of your Terraform resource's lifecycle.
+A Create-time provisioner, and a Destroy-time provisioner.
+Evident from their names,
+a Create-time provisioner is run
+as a resource is being created,
+and a Destroy-time provisioner is run
+as a resource is being destroyed.
+They can come in very handy
+with custom one off automation tasks.
+Now, onto the best practices and some warnings,
+when using Terraform provisioners.
+I like Hashicorp's transparency in making people aware
+of the cons of a feature,
+as much as those features might seem cool.
+In the case of provisioners,
+HashiCorp recommends to use them sparingly,
+and only when the underlying vendors,
+such as AWS does not already provide a built in mechanism
+for bootstrapping via custom commands or scripts.
+For example, AWS allows for passing scripts
+through user data in EC2 virtual machines.
+So if there's a better inherently available method
+for a resource,
+Hashicorp recommends using that.
+An important thing to note is that,
+since provisioners can take any independent action
+through a script or command,
+Terraform cannot and does not track them,
+as they break Terraform's declarative model.
+Terraform simply can be fully aware
+of all the custom independent actions
+that your one-off scripts may take.
+For this reason, provisioners are not tracked
+through Terraform state files either.
+Well then, when would you really have to use provisioners?
+Only when you want to execute actions,
+which are not covered by Terraform's declarative the model
+or through inherent options for the resources
+in available providers.
+Provisioners expect any custom script or commands
+to be executed with a return code of 0.
+Otherwise, it deems the execution failed,
+and taints the resource,
+that is marks the resource
+against which the provisioner was to be run
+to be created again on the next run.
+Now, let's look at the syntax of provisioners
+through a quick example.
+Before we go into an actual Linux shell,
+and show you provisioners in action,
+here we have another resource in Terraform,
+which basically mirrors the lifecycle
+of an actual resource.
+However, it carries out no backend actions by default.
+It can be created, destroyed, and modified,
+just like any other resource.
+So this is the syntax of a provisioner,
+and in this case, it is a local provisioner,
+which you can tell by the local-exec keyword,
+and inside the provisioner,
+we're just passing it a command,
+which is a shell command of bash,
+and we are outputting the value 0
+to the file, status.txt.
+And by default, the provisioner is a create provisioner.
+So, as soon as this resource has been created,
+this provisioner is going to run
+and execute this command in the same directory
+where the Terraform command was executed.
+Let's move on to the Destroy-time provisioner.
+The only difference in syntax between a Create
+and a Destroy-time provisioner is that,
+the Destroy-time provisioner has an option called when,
+which is set to destroy
+and that tells it to run on a destroy of a resource.
+In the Destroy provisioner, we're basically having it
+output the value one to the same status .txt file,
+upon being deleted or getting destroyed.
+You can use multiple provisioners against the same resource,
+and they're going to be executed in the same sequence
+as they're written out in.
+So if you've five local Creation-time provisioners,
+they're all going to execute in sequence,
+and so will the Destroy-time provisioners.
+So, let's move on to the Linux shell as promised,
+and show you a quick example of the same Terraform code
+that we've shown you here.
+So I'm logged into a CentOS 7 machine,
+and I'm going to quickly create a main dot tf file,
+and paste some code in it.
+The link to this code will also be available
+in the resources section of this lesson.
+So I've pasted down the code
+that you saw in the previous slide,
+and we've gone through this code.
+So we'll just go ahead and try to execute this now.
+We just wanted to make sure
+that there's no other files in this folder,
+and we'll go ahead and issue a Terraform in it,
+so that Terraform can fetch the provider
+which has the null resource resource.
+And there it is.
+We have the provider already installed.
+We'll clear the screen,
+and now issue a Terraform plan.
+Notice how there's no mention of the provisioners,
+even though there's two provisioners against this resource.
+That's what we need to be focused on,
+that the provisioners are not tracked,
+and are independent of the Terraform state file.
+So there's no mention of the provisioner.
+We'll next clear the screen,
+and issue the Terraform apply command.
+I'll also use the hyphen hyphen auto approve flag,
+so that I'm not prompted to enter a yes
+on this Terraform apply.
+And there it is.
+So we have successfully gone through applying
+a null resource with a Creation-time provisioner,
+and when it created the resource,
+it went ahead and executed this command.
+So let's list out the files of this directory,
+and you'll notice that there's a status .txt file,
+in addition to a terraform dot tf state file.
+So if we get out the value inside the status .txt file,
+it's going to be 0.
+Now, lets clear the screen
+and run the Terraform destroy command.
+Again, I'm going to use the hyphen hyphen auto approve flag,
+so that I'm not prompted for a yes to be entered.
+So I'll hit enter and there it is.
+Our deletion has also worked.
+So again, notice the steps.
+The Terraform logic first check the state file.
+Notice that there was a resource,
+which needs to be destroyed.
+It went ahead
+and ran the Destroy-time provisioner this time,
+which was to echo the number one,
+inside status.txt file.
+So we'll list out the files inside the directory,
+and since it was destroyed,
+there was a last backup of the tf state file left,
+but let's look inside the value of the status.txt file.
+And it is one.
+A thing to note is that,
+if a Creation-time provisioner fails,
+Terraform will mark that resource as tainted,
+and on the next supply it will try to delete
+and recreate the resource.
+Whereas for a Destroy-time provisioner,
+if the command inside
+or the script inside a Destroy-time provisioner fails,
+Terraform will try to re-run the provisioner
+on the next destroy attempt.
+I also wanted to point out a variable usage behavior
+inside provisioners.
+So, let's clear the screen and take this code for example.
+Now this is not a functional Terraform code.
+This is just a chunk of a code for showing you an example
+of how variables are used inside provisioners.
+The resource variable naming convention in Terraform,
+is that you first take the resource keyword,
+which in this case is aws_instance.
+and then the actual name
+that you assigned to the resource block,
+which in this case is ec2-virtual-machine,
+and then you can access any attribute
+that the resource provides.
+For example, to access the EC2 VM instance ID,
+you'd simply use the variable name,
+aws_instance.ec2
+virtual
+machine
+dot ID
+and this would give you back the AMI
+or Amazon Machine Image ID of the EC2 virtual machine.
+However, inside the provisioner,
+because of it being independent of Terraform's plans,
+using the same variable naming convention
+can cause cyclical dependencies,
+where you might be asking the provisioner to run a command
+against a resource which has not yet been created.
+And so Hashicorp has provided the self-object,
+which you can see here,
+which can access any attribute available to the resource
+that the provisioner is attached to.
+So you'll notice that we are using the self .id,
+which would return to you the same Amazon Machine Image ID
+that this variable would return to you.
+So this is one way that you isolate yourself
+from cyclical dependencies.
+If you try to use the normal naming convention
+inside a provisioner,
+Terraform for right now does throw a warning,
+letting you know that this is not the recommended behavior.
+And I'm pretty sure that moving into the future,
+Terraform is going to deprecate that behavior completely
+and make sure that you use the self object
+within the provisioner block.
+So this in a nutshell were provisioners,
+how do you use them,
+some of their best practices,
+and how to use variables inside the provisioner block.
+Thank you for going through this lesson.

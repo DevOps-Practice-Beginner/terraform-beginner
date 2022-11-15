@@ -1,0 +1,7 @@
+-> Terraforms way of bootstrapping custom scripts, commands or actions.
+-> Can be run either locally(on the same system where Terraform commands are being issued from), or remotely on resources spun up through the Terraform deployment. 
+-> Within Terraform code, each individual resource can have its own "provisioner" defining the connection method(if required such as SSH or WinRM) and the actions/commands or script to execute.
+-> There are 2 types of provisioners: "Creation-time" and "Destroy-time" provisioners which you can set to run when a resource is being created or destroyed.
+-> Terraform cannot track changes to provisioners as they can take any independent action, hence they are not tracked by TF state files.
+-> If the command within a provisioner returns non-zero return code, it's considered failed and underlying resource is tainted.
+-> Provisioners are recommended for use when you want to invoke actions not covered by Terraforms declarative model.
