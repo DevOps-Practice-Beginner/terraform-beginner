@@ -2,6 +2,9 @@ provider "aws" {
   region     = "us-east-1"
   access_key = "AKIA3KCJVLCVPBTWCJPC"
   secret_key = "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"
+  #export below keys from commandline
+  #export AWS_ACCESS_KEY_ID="anaccesskey"
+  #export AWS_SECRET_ACCESS_KEY="asecretkey"
 }
 
 # Security Group
